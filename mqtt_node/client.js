@@ -1,6 +1,7 @@
 var mqtt = require("mqtt");
 var fs = require('fs');
-var logger = fs.createWriteStream('log.txt', {
+const path = require('path');
+var logger = fs.createWriteStream(path.join(__dirname, 'log.txt'), {
   flags: 'a' // 'a' means appending (old data will be preserved)
 });
 var writeLine = (line) => logger.write(`\n${line}`);

@@ -11,7 +11,7 @@
 
 const char *ssid = "Hummus (UJB) 2.4";
 const char *password = "PlsNoTorrent";
-const char *mqtt_server = "10.0.0.125";
+const char *mqtt_server = "143.110.233.56";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -153,7 +153,7 @@ void setup_mqtt() {
   pinMode(OUTLET_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
+  client.setServer(mqtt_server, 2000);
   client.setCallback(callback);
 }
 
