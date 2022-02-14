@@ -1,9 +1,9 @@
 var mqtt = require("mqtt");
-var client = mqtt.connect("mqtt://127.0.0.1", {
+var client = mqtt.connect("mqtt://143.110.233.56", {
   clientId: "client2",
   username: "user",
   password: "pass",
-  port: 1883,
+  port: 2000,
 });
 
 client.on("message", function (topic, message, packet) {

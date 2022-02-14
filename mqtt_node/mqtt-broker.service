@@ -1,0 +1,11 @@
+[Unit]
+Description=MQTT Broker
+
+[Service]
+ExecStart=/usr/bin/node /root/esp8266_thermostat/mqtt_node/broker.js
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=default.target
+
