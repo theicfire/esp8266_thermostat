@@ -1,4 +1,10 @@
 var mqtt = require("mqtt");
+var fs = require('fs');
+var logger = fs.createWriteStream('log.txt', {
+  flags: 'a' // 'a' means appending (old data will be preserved)
+});
+var writeLine = (line) => logger.write(`\n${line}`);
+
 var client = mqtt.connect("mqtt://143.110.233.56", {
   clientId: "mqttjs01",
   username: "user",
@@ -7,7 +13,15 @@ var client = mqtt.connect("mqtt://143.110.233.56", {
 });
 
 client.on("message", function (topic, message, packet) {
-  console.log(`message: ${message}, topic: ${topic}`);
+	if (topic === 'outTopic') {
+	  const msg = JSON.parse(message.toString());
+	  console.log(msg);
+	  const tolog = `${new Date().toISOString()}, ${msg.deg_c}, ${msg.rh}`;
+	  console.log(tolog);
+	  writeLine(tolog);
+	} else {
+	  console.log(`Unknown topic: ${topic}`);
+	}
 });
 
 client.on("connect", function () {
@@ -43,5 +57,15 @@ setInterval(function () {
     }),
     options
   );
+
+  //publish(
+    //"outTopic",
+    //JSON.stringify({
+      //v: "1",
+      //deg_c: '22.2',
+      //rh: '47.2',
+    //}),
+    //options
+  //);
   count += 1;
 }, 2000);
