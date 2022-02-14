@@ -34,6 +34,14 @@ function publish(topic, msg, options) {
 
 let count = 0;
 setInterval(function () {
-  publish("inTopic", `test: ${count}`, options);
+  publish(
+    "inTopic",
+    JSON.stringify({
+      outlet_on: count % 2 == 0 ? true : false,
+      v: "1",
+      count: count,
+    }),
+    options
+  );
   count += 1;
 }, 2000);

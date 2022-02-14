@@ -5,6 +5,9 @@
 #include "Adafruit_SHT4x.h"
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
+
+#define OUTLET_PIN (5)
 
 const char *ssid = "Hummus (UJB) 2.4";
 const char *password = "PlsNoTorrent";
@@ -14,11 +17,12 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 unsigned long lastMsg = 0;
 unsigned long lastSensorRead = 0;
-#define MSG_BUFFER_SIZE (50)
+#define MSG_BUFFER_SIZE (200)
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
+
 
 void setup_wifi() {
 
@@ -47,22 +51,25 @@ void setup_wifi() {
 void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
-  Serial.print("] ");
+  Serial.println("] ");
+
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED,
-                 LOW); // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED,
-                 HIGH); // Turn the LED off by making the voltage HIGH
+  // On the stack
+  StaticJsonDocument<256> doc;
+  DeserializationError error = deserializeJson(doc, payload, length);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
   }
+
+  bool outlet_on = doc["outlet_on"];
+  digitalWrite(OUTLET_PIN, outlet_on ? HIGH : LOW);
+  digitalWrite(LED_BUILTIN, outlet_on ? LOW : HIGH);
 }
 
 void reconnect() {
@@ -143,7 +150,8 @@ void setup_sensor() {
 }
 
 void setup_mqtt() {
-  pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
+  pinMode(OUTLET_PIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -159,21 +167,20 @@ void loop_sensor() {
   sensors_event_t humidity, temp;
 
   uint32_t timestamp = millis();
-  sht4.getEvent(&humidity,
-                &temp); // populate temp and humidity objects with fresh data
+  sht4.getEvent(&humidity, &temp); // populate temp and humidity objects with fresh data
   timestamp = millis() - timestamp;
 
-  Serial.print("Temperature: ");
-  Serial.print(temp.temperature);
-  Serial.println(" degrees C");
-  Serial.print("Humidity: ");
-  Serial.print(humidity.relative_humidity);
-  Serial.println("% rH");
+  // On the stack
+  StaticJsonDocument<256> doc;
 
-  Serial.print("Read duration (ms): ");
-  Serial.println(timestamp);
-
-  delay(1000);
+  doc["v"] = 1;
+  doc["deg_c"] = temp.temperature;
+  doc["rh"] = humidity.relative_humidity;
+  memset(msg, 0, MSG_BUFFER_SIZE); // TODO is this needed?
+  serializeJson(doc, msg, MSG_BUFFER_SIZE);
+  Serial.print("Publish: ");
+  Serial.println(msg);
+  client.publish("outTopic", msg); // TODO what happens if the connection is bad?
 }
 
 void loop_mqtt() {
@@ -182,17 +189,17 @@ void loop_mqtt() {
   }
   client.loop();
 
-  unsigned long now = millis();
-  if (now - lastMsg < 2000) {
-    return;
-  }
+  //unsigned long now = millis();
+  //if (now - lastMsg < 2000) {
+    //return;
+  //}
 
-  lastMsg = now;
-  ++value;
-  snprintf(msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
-  Serial.print("Publish message: ");
-  Serial.println(msg);
-  client.publish("outTopic", msg);
+  //lastMsg = now;
+  //++value;
+  //snprintf(msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+  //Serial.print("Publish message: ");
+  //Serial.println(msg);
+  //client.publish("outTopic", msg);
 }
 
 void setup() {
