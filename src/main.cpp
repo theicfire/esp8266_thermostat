@@ -7,7 +7,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-#define OUTLET_PIN (5)
+#define OUTLET_PIN (14)
 
 const char *ssid = "Hummus (UJB) 2.4";
 const char *password = "PlsNoTorrent";
@@ -58,8 +58,8 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
 
-  // On the stack
   StaticJsonDocument<256> doc;
+
   DeserializationError error = deserializeJson(doc, payload, length);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
@@ -152,7 +152,6 @@ void setup_sensor() {
 void setup_mqtt() {
   pinMode(OUTLET_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -170,7 +169,6 @@ void loop_sensor() {
   sht4.getEvent(&humidity, &temp); // populate temp and humidity objects with fresh data
   timestamp = millis() - timestamp;
 
-  // On the stack
   StaticJsonDocument<256> doc;
 
   doc["v"] = 1;
