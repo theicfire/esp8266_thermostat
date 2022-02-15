@@ -2,7 +2,7 @@
 Description=Temp controller
 
 [Service]
-ExecStart=/usr/bin/node /root/esp8266_thermostat/mqtt_node/client.js
+ExecStart=/usr/bin/node /root/esp8266_thermostat/mqtt_node/temp-controller.js
 Restart=always
 RestartSec=1
 
