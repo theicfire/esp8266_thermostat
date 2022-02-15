@@ -7,7 +7,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-constexpr int OUTLET_PIN = 14;
+constexpr int OUTLET_PIN = 14; // D5
 constexpr bool HAS_SENSOR = true;
 
 constexpr int SENSOR_PUBLISH__MS = 10000;
