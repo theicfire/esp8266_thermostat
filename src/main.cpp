@@ -7,7 +7,10 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-#define OUTLET_PIN (14)
+constexpr int OUTLET_PIN = 14;
+constexpr bool HAS_SENSOR = false;
+
+constexpr int SENSOR_PUBLISH__MS = 10000;
 
 const char *ssid = "Hummus (UJB) 2.4";
 const char *password = "PlsNoTorrent";
@@ -19,15 +22,13 @@ unsigned long lastMsg = 0;
 unsigned long lastSensorRead = 0;
 #define MSG_BUFFER_SIZE (200)
 char msg[MSG_BUFFER_SIZE];
-int value = 0;
 
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 
 
 void setup_wifi() {
+  delay(10); // TODO not sure why
 
-  delay(10);
-  // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -69,7 +70,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
 
   bool outlet_on = doc["outlet_on"];
   digitalWrite(OUTLET_PIN, outlet_on ? HIGH : LOW);
-  digitalWrite(LED_BUILTIN, outlet_on ? LOW : HIGH);
+  //digitalWrite(LED_BUILTIN, outlet_on ? LOW : HIGH);
 }
 
 void reconnect() {
@@ -77,15 +78,12 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
-    String clientId = "ESP8266Client-";
+    String clientId = HAS_SENSOR ? "ESP8266sensor-" : "ESP8266outlet-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
     if (client.connect(clientId.c_str(), "user", "pass")) {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
-      // ... and resubscribe
-      client.subscribe("inTopic");
+      client.subscribe("outletState");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -97,6 +95,9 @@ void reconnect() {
 }
 
 void setup_sensor() {
+  if (!HAS_SENSOR) {
+    return;
+  }
   if (!sht4.begin()) {
     Serial.println("Couldn't find SHT4x");
     while (1)
@@ -151,15 +152,18 @@ void setup_sensor() {
 
 void setup_mqtt() {
   pinMode(OUTLET_PIN, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
+  //pinMode(LED_BUILTIN, OUTPUT);
   setup_wifi();
   client.setServer(mqtt_server, 2000);
   client.setCallback(callback);
 }
 
 void loop_sensor() {
+  if (!HAS_SENSOR) {
+    return;
+  }
   unsigned long now = millis();
-  if (now - lastSensorRead < 2000) {
+  if (now - lastSensorRead < SENSOR_PUBLISH__MS) {
     return;
   }
   lastSensorRead = now;
@@ -178,7 +182,7 @@ void loop_sensor() {
   serializeJson(doc, msg, MSG_BUFFER_SIZE);
   Serial.print("Publish: ");
   Serial.println(msg);
-  client.publish("outTopic", msg); // TODO what happens if the connection is bad?
+  client.publish("sensorState", msg); // TODO what happens if the connection is bad?
 }
 
 void loop_mqtt() {
@@ -186,25 +190,14 @@ void loop_mqtt() {
     reconnect(); // blocking, eww
   }
   client.loop();
-
-  //unsigned long now = millis();
-  //if (now - lastMsg < 2000) {
-    //return;
-  //}
-
-  //lastMsg = now;
-  //++value;
-  //snprintf(msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
-  //Serial.print("Publish message: ");
-  //Serial.println(msg);
-  //client.publish("outTopic", msg);
 }
 
 void setup() {
   Serial.begin(115200);
 
-  while (!Serial)
-    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+  while (!Serial) {
+    delay(10);
+  }
 
   Serial.println("Begin setup");
   setup_sensor();
