@@ -71,7 +71,6 @@ setInterval(() => {
 client.on("message", function (topic, message, packet) {
   if (topic === "sensorState") {
     const msg = JSON.parse(message.toString());
-    console.log(msg);
     const tolog = `${new Date().toISOString()}, ${msg.deg_c}, ${msg.rh}`;
     tempController.update(msg.deg_c);
     console.log(tolog);
