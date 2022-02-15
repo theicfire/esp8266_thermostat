@@ -8,7 +8,7 @@
 #include <ArduinoJson.h>
 
 constexpr int OUTLET_PIN = 14;
-constexpr bool HAS_SENSOR = false;
+constexpr bool HAS_SENSOR = true;
 
 constexpr int SENSOR_PUBLISH__MS = 10000;
 
@@ -77,13 +77,15 @@ void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
+
     String clientId = HAS_SENSOR ? "ESP8266sensor-" : "ESP8266outlet-";
     clientId += String(random(0xffff), HEX);
-    // Attempt to connect
+
     if (client.connect(clientId.c_str(), "user", "pass")) {
       Serial.println("connected");
-      client.subscribe("outletState");
+      if (!HAS_SENSOR) {
+        client.subscribe("outletState");
+      }
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
