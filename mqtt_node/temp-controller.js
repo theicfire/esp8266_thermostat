@@ -73,7 +73,7 @@ client.on("message", function (topic, message, packet) {
     const msg = JSON.parse(message.toString());
     const tolog = `${new Date().toISOString()}, ${msg.deg_c}, ${msg.rh}`;
     tempController.update(msg.deg_c);
-    console.log(tolog);
+    console.log(`Got sensorState. Writing to log: ${tolog}`);
     writeLine(tolog);
   } else {
     console.log(`Unknown topic: ${topic}`);
