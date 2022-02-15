@@ -1,4 +1,6 @@
 # Thermostat controller
+Turn on/off a room heater based on the temperature of the room.
+
 ## Setup
 ### Equipment
 - Two ESP8266's. I use the Wemos D1 Mini. A NodeMCU will also work. One measure temperatures, the other controls a heater. They could be the same device, but I found that I wanted them to be in different locations.
@@ -10,6 +12,7 @@
 - Connect the other ESP to ground and D5.
 ### Programming
 - Change the ip address to the correct broker
+- Change the desired temperature range
 - `make upload` on each of the ESP's. One with `HAS_SENSOR` to `true`, the other to `false`.
 - Run the two node scripts in systemd
 
@@ -28,5 +31,4 @@ Here's what I'm using:
 - JS - aedes -- runs MQTT broker
 - JS - mqtt -- runs MQTT client that runs a simple thermostat algorithm
 - systemd to run the js services, manage logs, and restart them if they crash
-
 
