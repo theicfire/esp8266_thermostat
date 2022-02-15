@@ -27,7 +27,8 @@ class TempController {
     return this.lastOutletChange.getTime() < curTime - 30 * 60 * 1000;
   }
 
-  update(temp, curTime) {
+  update(temp, testTime) {
+    const curTime = testTime ? testTime : new Date();
     if (temp >= this.LOW_THRESH) {
       this.lastAboveLowThresh = curTime;
     } else if (temp <= this.HIGH_THRESH) {
@@ -37,7 +38,9 @@ class TempController {
     if (temp < this.LOW_THRESH) {
       if (this.lastAboveLowThresh.getTime() < curTime - 60 * 1000) {
         if (this.canChangeOutlet(curTime)) {
-          console.log("Outlet is now on");
+          if (!testTime) {
+            console.log("Outlet is now on");
+          }
           this.isOutletOn = true;
           this.lastOutletChange = curTime;
         }
@@ -45,7 +48,9 @@ class TempController {
     } else if (temp > this.HIGH_THRESH) {
       if (this.lastBelowHighThresh.getTime() < curTime - 60 * 1000) {
         if (this.canChangeOutlet(curTime)) {
-          console.log("Outlet is now off");
+          if (!testTime) {
+            console.log("Outlet is now off");
+          }
           this.isOutletOn = false;
           this.lastOutletChange = curTime;
         }
@@ -68,7 +73,7 @@ client.on("message", function (topic, message, packet) {
     const msg = JSON.parse(message.toString());
     console.log(msg);
     const tolog = `${new Date().toISOString()}, ${msg.deg_c}, ${msg.rh}`;
-    tempController.update(msg.deg_c, new Date());
+    tempController.update(msg.deg_c);
     console.log(tolog);
     writeLine(tolog);
   } else {
@@ -99,15 +104,17 @@ function publish(topic, msg) {
 
 function run_tests() {
   const tempController = new TempController();
-  tempController.update(0, new Date(0));
-  tempController.update(40, new Date(0));
-  console.assert(tempController.isOutletOn === false);
-  tempController.update(10, new Date(70 * 1000));
-  console.assert(tempController.isOutletOn === true);
-  tempController.update(40, new Date(200 * 1000));
-  console.assert(tempController.isOutletOn === true);
-  tempController.update(40, new Date(32 * 60 * 1000));
-  console.assert(tempController.isOutletOn === false);
+  const DATE_START_MS = new Date(2020, 1, 1, 0, 0, 0).getTime();
+  tempController.update(0, new Date(DATE_START_MS));
+  tempController.update(40, new Date(DATE_START_MS));
+  console.assert(tempController.isOutletOn === false, "a");
+  tempController.update(10, new Date(DATE_START_MS + 70 * 1000));
+  console.assert(tempController.isOutletOn === true, "b");
+  tempController.update(40, new Date(DATE_START_MS + 200 * 1000));
+  console.assert(tempController.isOutletOn === true, "c");
+  tempController.update(40, new Date(DATE_START_MS + 32 * 60 * 1000));
+  console.assert(tempController.isOutletOn === false, "d");
+  console.log("Finished tests.");
 }
 
 run_tests();
