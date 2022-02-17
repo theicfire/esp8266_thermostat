@@ -32,3 +32,7 @@ Here's what I'm using:
 - JS - mqtt -- runs MQTT client that runs a simple thermostat algorithm
 - systemd to run the js services, manage logs, and restart them if they crash
 
+## Show me some pictures
+Here's the temperature of my room over the course of a day. I turn the heater off at night and back on in the morning, which is why it's so cold at the start.
+<img width="907" alt="image" src="https://user-images.githubusercontent.com/442311/154426316-d118bc54-c2d4-4013-8398-4d924d146342.png">
+
